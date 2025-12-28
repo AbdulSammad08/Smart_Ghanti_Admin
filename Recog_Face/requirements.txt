@@ -1,0 +1,115 @@
+# ============================================
+# Face Recognition System Requirements
+# ============================================
+# Python 3.10 required
+
+# ============================================
+# INSTALLATION INSTRUCTIONS
+# ============================================
+
+# Option 1: Install all at once (Recommended)
+# pip install -r requirements.txt
+
+# Option 2: Install individually with exact versions
+# Copy and paste the commands below:
+
+# Core ML Frameworks
+# pip install tensorflow==2.11.0
+# pip install keras==2.11.0
+# pip install numpy==1.26.4
+
+# Computer Vision
+# pip install opencv-python==4.12.0.88
+
+# Face Recognition
+# pip install deepface==0.0.96
+# pip install keras-vggface==0.6
+
+# Object Detection (YOLO)
+# pip install ultralytics==8.3.235
+# pip install torch==2.9.1
+# pip install torchvision==0.24.1
+
+# GUI
+# pip install Pillow==12.0.0
+
+# API Server (Optional - only if using api.py)
+# pip install Flask==3.1.2
+# pip install flask-cors==6.0.1
+
+# Utilities
+# pip install requests==2.32.5
+# pip install scipy==1.15.3
+# pip install tqdm==4.67.1
+
+# ============================================
+# PACKAGE LIST (for pip install -r requirements.txt)
+# ============================================
+# All versions confirmed and tested on Python 3.10
+
+# Core ML Frameworks
+tensorflow==2.11.0
+keras==2.11.0
+numpy==1.26.4
+
+# Computer Vision
+opencv-python==4.12.0.88
+
+# Face Recognition
+deepface==0.0.96
+keras-vggface==0.6
+
+# Object Detection (YOLO)
+ultralytics==8.3.235
+torch==2.9.1
+torchvision==0.24.1
+
+# GUI
+Pillow==12.0.0
+
+# API Server
+Flask==3.1.2
+flask-cors==6.0.1
+
+# Utilities
+requests==2.32.5
+scipy==1.15.3
+tqdm==4.67.1
+
+# ============================================
+# ADDITIONAL DEPENDENCIES
+# ============================================
+# These are automatically installed with the above packages:
+# - protobuf<3.20,>=3.9.2 (for TensorFlow)
+# - h5py>=2.9.0 (for model loading)
+# - pandas (for DeepFace)
+# - retina-face (for DeepFace)
+# - mtcnn (for DeepFace)
+# - gdown (for DeepFace model downloads)
+# - fire (for DeepFace CLI)
+
+# ============================================
+# MODELS USED
+# ============================================
+# Face Detection:
+#   - Model: YOLOv8n-face
+#   - Source: Ultralytics
+#   - Auto-download: Yes (on first run)
+#   - Location: models/yolov8n-face.pt
+#   - Size: ~6 MB
+
+# Face Recognition:
+#   - Model: Facenet (via DeepFace)
+#   - Framework: TensorFlow/Keras
+#   - Auto-download: Yes (on first run)
+#   - Embedding Size: 128-dimensional vectors
+#   - Accuracy: High (industry standard)
+
+# ============================================
+# SYSTEM REQUIREMENTS
+# ============================================
+# - Python: 3.10
+# - OS: Windows, Linux, or macOS
+# - RAM: Minimum 4GB (8GB recommended)
+# - Storage: ~2GB for models and dependencies
+# - GPU: Optional (CPU works fine for face recognition)

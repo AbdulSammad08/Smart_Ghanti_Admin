@@ -10,6 +10,8 @@ const adminRoutes = require('./routes/admin');
 const subscriptionRoutes = require('./routes/subscriptions');
 const transferRoutes = require('./routes/transfers');
 const paymentRoutes = require('./routes/payments');
+const doorbellRoutes = require('./routes/doorbell');
+const firebaseService = require('./services/firebaseService');
 
 const app = express();
 
@@ -82,6 +84,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/transfers', transferRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/doorbell', doorbellRoutes);
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -119,6 +122,17 @@ const startServer = async () => {
   console.log('🔄 Connecting to Azure Cosmos DB...');
   
   const dbConnected = await connectDB();
+  
+  // Initialize Firebase service
+  if (dbConnected) {
+    try {
+      await firebaseService.initialize();
+      console.log('✅ Firebase service initialized');
+    } catch (error) {
+      console.error('⚠️  Firebase initialization failed:', error.message);
+      console.log('📱 Push notifications will not work');
+    }
+  }
   
   if (dbConnected) {
     // Wait a bit more to ensure connection is stable

@@ -18,9 +18,9 @@ const HomeownerDetails = () => {
     if (token && id) {
       fetchHomeownerDetails();
     }
-  }, [token, id]);
+  }, [token, id, fetchHomeownerDetails]);
 
-  const fetchHomeownerDetails = async () => {
+  const fetchHomeownerDetails = React.useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5000/api/users/${id}/details`, {
         headers: {
@@ -44,7 +44,7 @@ const HomeownerDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, id]);
 
   const calculateRenewalDate = (createdAt, billingCycle) => {
     const startDate = new Date(createdAt);

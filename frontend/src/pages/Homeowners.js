@@ -9,14 +9,7 @@ const Homeowners = () => {
   const [loading, setLoading] = useState(true);
   const { token } = useContext(AuthContext);
 
-  useEffect(() => {
-    console.log('Token changed:', token);
-    if (token) {
-      fetchHomeowners();
-    }
-  }, [token]);
-
-  const fetchHomeowners = async () => {
+  const fetchHomeowners = React.useCallback(async () => {
     if (!token) {
       console.log('No token available');
       setLoading(false);
@@ -51,9 +44,14 @@ const Homeowners = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
-
+  useEffect(() => {
+    console.log('Token changed:', token);
+    if (token) {
+      fetchHomeowners();
+    }
+  }, [token, fetchHomeowners]);
 
   const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
