@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { NotificationService } from '../utils/NotificationService';
 
 const TransferRequests = () => {
   const [beneficialAllotments, setBeneficialAllotments] = useState([]);
@@ -35,6 +36,7 @@ const TransferRequests = () => {
           transfers: transfersRes.statusText,
           ownerships: ownershipsRes.statusText
         });
+        NotificationService.error('Failed to Load Data', 'Could not fetch transfer requests');
         return;
       }
 
@@ -51,8 +53,15 @@ const TransferRequests = () => {
       setBeneficialAllotments(allotmentsData);
       setOwnershipTransfers(transfersData);
       setSecondaryOwnerships(ownershipsData);
+
+      // Show notification for data loaded
+      const totalRequests = allotmentsData.length + transfersData.length + ownershipsData.length;
+      if (totalRequests > 0) {
+        NotificationService.info('✅ Transfer Requests Loaded', `${totalRequests} total requests loaded`);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
+      NotificationService.error('Error', 'Failed to fetch transfer requests');
     } finally {
       setLoading(false);
     }
@@ -78,11 +87,19 @@ const TransferRequests = () => {
 
       if (response.ok) {
         fetchAllData(); // Refresh data
-        alert(`Request ${action}ed successfully!`);
+        
+        // Show appropriate notification based on action
+        if (action === 'confirm') {
+          NotificationService.approved('Transfer Request');
+        } else if (action === 'reject') {
+          NotificationService.rejected('Transfer Request');
+        }
+      } else {
+        NotificationService.error('Action Failed', 'Could not update request status');
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Error updating request status');
+      NotificationService.error('Error', 'Failed to update request status');
     }
   };
 

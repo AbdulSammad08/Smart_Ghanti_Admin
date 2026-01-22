@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+import { NotificationService } from '../utils/NotificationService';
 const Signup = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -17,10 +18,10 @@ const Signup = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      NotificationService.error('❌ Password Mismatch', 'Passwords do not match. Please try again.');
       return;
     }
-    alert('Account created successfully! Please login.');
+    NotificationService.success('✅ Account Created', 'Account created successfully! Please login to continue.');
     navigate('/login');
   };
 

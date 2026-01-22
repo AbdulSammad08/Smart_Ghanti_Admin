@@ -40,6 +40,16 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Subscription'
   },
+  subscriptionStatus: {
+    type: String,
+    default: 'None'
+  },
+  subscriptionPlan: {
+    type: String,
+    default: 'None'
+  },
+  subscriptionStartDate: Date,
+  subscriptionEndDate: Date,
   secondaryUsers: [{
     name: String,
     email: String,

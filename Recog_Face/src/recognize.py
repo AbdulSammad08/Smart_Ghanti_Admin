@@ -118,3 +118,21 @@ class Recognizer:
             results.append((x1, y1, x2, y2, name))
 
         return results
+    
+    def recognize_from_base64(self, base64_image):
+        """Process a base64-encoded image and return recognition results"""
+        import base64
+        import io
+        from PIL import Image
+        
+        try:
+            # Decode base64
+            image_bytes = base64.b64decode(base64_image)
+            image = Image.open(io.BytesIO(image_bytes))
+            img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+            
+            # Recognize
+            return self.recognize(img)
+        except Exception as e:
+            print(f"[Recognizer] Error processing base64 image: {e}")
+            return []

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import { NotificationService } from '../utils/NotificationService';
 
 const PaymentProofs = () => {
   const [payments, setPayments] = useState([]);
@@ -19,9 +20,16 @@ const PaymentProofs = () => {
       if (response.ok) {
         const data = await response.json();
         setPayments(data);
+        // Show notification for data loaded
+        if (data.length > 0) {
+          NotificationService.info('✅ Payments Loaded', `${data.length} payment proofs loaded`);
+        }
+      } else {
+        NotificationService.error('Failed to Load Payments', 'Could not fetch payment proofs');
       }
     } catch (error) {
       console.error('Error fetching payments:', error);
+      NotificationService.error('Error', 'Failed to fetch payment proofs');
     } finally {
       setLoading(false);
     }
@@ -47,16 +55,32 @@ const PaymentProofs = () => {
 
       if (response.ok) {
         fetchPayments();
-        alert(`Payment ${action}ed successfully!`);
+        // Show appropriate notification based on action
+        if (action === 'confirm') {
+          NotificationService.approved('Payment');
+        } else if (action === 'reject') {
+          NotificationService.rejected('Payment');
+        }
+      } else {
+        NotificationService.error('Action Failed', 'Could not update payment status');
       }
     } catch (error) {
       console.error('Error updating status:', error);
-      alert('Error updating payment status');
+      NotificationService.error('Error', 'Failed to update payment status');
     }
   };
 
   const openReceipt = (receiptFile) => {
-    const filename = receiptFile.split('\\').pop();
+    // Extract filename from either full URL or relative path
+    let filename;
+    if (receiptFile.includes('http://') || receiptFile.includes('https://')) {
+      // Full URL - extract just the filename from the end
+      filename = receiptFile.split('/').pop();
+    } else {
+      // Local path - handle backslashes
+      filename = receiptFile.split('\\').pop();
+    }
+    console.log('Receipt file:', receiptFile, 'Filename:', filename);
     const receiptUrl = `http://localhost:5000/api/payments/receipt/${filename}`;
     window.open(receiptUrl, '_blank');
   };

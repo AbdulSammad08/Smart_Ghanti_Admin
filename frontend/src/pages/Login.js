@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 
+import { NotificationService } from '../utils/NotificationService';
 const Login = () => {
   const [email, setEmail] = useState('admin@smartbell.com');
   const [password, setPassword] = useState('SmartBell2024!');
@@ -12,9 +13,10 @@ const Login = () => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
+        NotificationService.success('✅ Login Successful', 'Welcome back to the admin panel');
       navigate('/dashboard');
     } else {
-      alert('Invalid credentials. Please check your email and password.');
+      NotificationService.error('❌ Login Failed', 'Invalid email or password. Please try again.');
     }
   };
 

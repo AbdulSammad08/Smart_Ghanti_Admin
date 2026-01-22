@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { AuthContext } from '../components/AuthContext';
+import { NotificationService } from '../utils/NotificationService';
 
 const Homeowners = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,9 +39,14 @@ const Homeowners = () => {
       const data = await response.json();
       console.log('Fetched data:', data);
       setHomeowners(data.users || []);
+      
+      // Show notification for new data loaded
+      if (data.users && data.users.length > 0) {
+        NotificationService.info('✅ Data Loaded', `${data.users.length} homeowners loaded successfully`);
+      }
     } catch (error) {
       console.error('Error fetching homeowners:', error);
-      alert('Failed to fetch data: ' + error.message);
+      NotificationService.error('Failed to Load Data', error.message);
     } finally {
       setLoading(false);
     }
@@ -54,7 +60,14 @@ const Homeowners = () => {
   }, [token, fetchHomeowners]);
 
   const handleDelete = async (userId) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
+    const isConfirmed = await NotificationService.confirm(
+      'Delete Homeowner?',
+      'Are you sure you want to delete this homeowner? This action cannot be undone.',
+      'Yes, delete it!',
+      'Cancel'
+    );
+
+    if (isConfirmed) {
       try {
         const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
           method: 'DELETE',
@@ -65,12 +78,13 @@ const Homeowners = () => {
         
         if (response.ok) {
           setHomeowners(homeowners.filter(h => h._id !== userId));
+          NotificationService.deleted('Homeowner');
         } else {
-          alert('Failed to delete user');
+          NotificationService.error('Deletion Failed', 'Unable to delete this homeowner');
         }
       } catch (error) {
         console.error('Error deleting user:', error);
-        alert('Error deleting user');
+        NotificationService.error('Error', 'Failed to delete homeowner');
       }
     }
   };
@@ -80,15 +94,6 @@ const Homeowners = () => {
     (homeowner.email && homeowner.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (homeowner._id && homeowner._id.toString().includes(searchTerm))
   );
-
-  const getBadgeClass = (status) => {
-    switch(status) {
-      case 'Yes': case 'Completed': return 'badge-success';
-      case 'Pending': return 'badge-warning';
-      case 'No': case 'Rejected': return 'badge-danger';
-      default: return 'badge-primary';
-    }
-  };
 
   if (loading) {
     return (
@@ -132,8 +137,8 @@ const Homeowners = () => {
               <th>Email</th>
               <th>Verified</th>
               <th>Secondary Users</th>
-              <th>Beneficiary Allotted</th>
-              <th>Ownership Transfer</th>
+              <th>Beneficiary Allotments</th>
+              <th>Ownership Transfers</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -151,9 +156,9 @@ const Homeowners = () => {
                   <td>{homeowner.name}</td>
                   <td>{homeowner.email}</td>
                   <td><span className={`badge ${homeowner.isVerified ? 'badge-success' : 'badge-danger'}`}>{homeowner.isVerified ? 'Yes' : 'No'}</span></td>
-                  <td><span className="badge-count">{homeowner.secondaryUsers || 0}</span></td>
-                  <td><span className={`badge ${getBadgeClass(homeowner.beneficiaryAllotted)}`}>{homeowner.beneficiaryAllotted}</span></td>
-                  <td><span className={`badge ${getBadgeClass(homeowner.ownershipTransfer)}`}>{homeowner.ownershipTransfer}</span></td>
+                  <td><span className="badge-count">{homeowner.secondaryUsersCount || 0}</span></td>
+                  <td><span className={`badge ${homeowner.beneficiaryAllotmentCount > 0 ? 'badge-success' : 'badge-warning'}`}>{homeowner.beneficiaryAllotmentCount || 0}</span></td>
+                  <td><span className={`badge ${homeowner.ownershipTransferCount > 0 ? 'badge-info' : 'badge-secondary'}`}>{homeowner.ownershipTransferCount || 0}</span></td>
                   <td>
                     <div className="action-buttons">
                       <Link to={`/homeowner-details/${homeowner._id}`} className="btn btn-small btn-primary">View</Link>

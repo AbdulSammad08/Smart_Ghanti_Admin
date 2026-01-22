@@ -60,23 +60,48 @@ router.get('/', auth, dbCheck, async (req, res) => {
   try {
     const mongoose = require('mongoose');
     const db = mongoose.connection.db;
+    const SecondaryOwnership = require('../models/SecondaryOwnership');
+    const OwnershipTransfer = require('../models/OwnershipTransfer');
+    const BeneficialAllotment = require('../models/BeneficialAllotment');
     
     // Get users directly from users_v2 collection
     const users = await db.collection('users_v2').find({}).toArray();
     console.log('Found users from users_v2:', users.length);
     
-    const usersWithData = users.map(user => ({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      isVerified: user.isVerified || false,
-      status: user.status || 'Active',
-      secondaryUsers: user.secondaryUsers ? user.secondaryUsers.length : 0,
-      beneficiaryAllotted: user.subscriptionId ? 'Yes' : 'No',
-      ownershipTransfer: 'Not Requested',
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      lastLogin: user.lastLogin
+    // Fetch counts for each user
+    const usersWithData = await Promise.all(users.map(async (user) => {
+      const userId = new mongoose.Types.ObjectId(user._id); // ensure ObjectId for all queries
+      
+      // Count secondary ownerships for this user
+      const secondaryOwnershipsCount = await SecondaryOwnership.countDocuments({ userId });
+      
+      // Count ownership transfers for this user
+      const ownershipTransfersCount = await OwnershipTransfer.countDocuments({ userId });
+      
+      // Count beneficial allotments for this user
+      const beneficialAllotmentsCount = await BeneficialAllotment.countDocuments({ userId });
+      
+      console.log(`📊 User: ${user.name}, SecondaryOwnership: ${secondaryOwnershipsCount}, OwnershipTransfers: ${ownershipTransfersCount}, BeneficialAllotments: ${beneficialAllotmentsCount}`);
+      
+      return {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified || false,
+        status: user.status || 'Active',
+        secondaryUsersCount: secondaryOwnershipsCount,
+        secondaryOwnershipCount: secondaryOwnershipsCount,
+        beneficiaryAllotmentCount: beneficialAllotmentsCount,
+        ownershipTransferCount: ownershipTransfersCount,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+        lastLogin: user.lastLogin,
+        subscriptionStatus: user.subscriptionStatus && user.subscriptionStatus.trim() ? 
+          user.subscriptionStatus.charAt(0).toUpperCase() + user.subscriptionStatus.slice(1).toLowerCase() : 'None',
+        subscriptionPlan: user.subscriptionPlan || 'None',
+        subscriptionStartDate: user.subscriptionStartDate,
+        subscriptionEndDate: user.subscriptionEndDate
+      };
     }));
     
     console.log('Processed users data:', usersWithData.length);
@@ -109,22 +134,47 @@ router.get('/:id', auth, dbCheck, async (req, res) => {
 // Get user details with related data
 router.get('/:id/details', auth, dbCheck, async (req, res) => {
   try {
+    console.log('📋 Fetching user details for ID:', req.params.id);
     const mongoose = require('mongoose');
     const SecondaryOwnership = require('../models/SecondaryOwnership');
     const OwnershipTransfer = require('../models/OwnershipTransfer');
     const BeneficialAllotment = require('../models/BeneficialAllotment');
     
-    const user = await User.findById(req.params.id).populate('subscriptionId');
+    const db = mongoose.connection.db;
+    
+    // Get user directly from users_v2 collection with subscription data
+    const user = await db.collection('users_v2').findOne({ 
+      _id: new mongoose.Types.ObjectId(req.params.id) 
+    });
+    
+    console.log('👤 User found:', user ? user.name : 'Not found');
+    console.log('📦 Subscription data:', {
+      status: user?.subscriptionStatus,
+      plan: user?.subscriptionPlan,
+      startDate: user?.subscriptionStartDate,
+      endDate: user?.subscriptionEndDate
+    });
+    
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Get active subscription from payments
-    const db = mongoose.connection.db;
-    const activeSubscription = await db.collection('payments').findOne({ 
-      userName: user.name, 
-      __v: 1 
-    });
+    // Build subscription object from user's subscription fields
+    const subscriptionStatus = user.subscriptionStatus && user.subscriptionStatus.trim() ? 
+      user.subscriptionStatus.charAt(0).toUpperCase() + user.subscriptionStatus.slice(1).toLowerCase() : 'None';
+    
+    const activeSubscription = {
+      status: subscriptionStatus,
+      plan: user.subscriptionPlan || 'None',
+      startDate: user.subscriptionStartDate,
+      endDate: user.subscriptionEndDate,
+      isActive: user.subscriptionStatus && 
+                user.subscriptionStatus.toLowerCase() === 'active' && 
+                user.subscriptionEndDate && 
+                new Date(user.subscriptionEndDate) > new Date()
+    };
+    
+    console.log('✅ Active subscription object:', activeSubscription);
 
     // Get related data
     const secondaryOwnerships = await SecondaryOwnership.find({ userId: req.params.id });
@@ -139,6 +189,7 @@ router.get('/:id/details', auth, dbCheck, async (req, res) => {
       beneficialAllotments
     });
   } catch (error) {
+    console.error('Error fetching user details:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

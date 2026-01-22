@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
+import { NotificationService } from '../utils/NotificationService';
 const ActiveSubscriptions = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,9 +20,16 @@ const ActiveSubscriptions = () => {
       if (response.ok) {
         const data = await response.json();
         setSubscriptions(data);
+              // Show notification for subscriptions loaded
+              if (data.length > 0) {
+                NotificationService.info('✅ Subscriptions Loaded', `${data.length} active subscriptions loaded`);
+              }
+            } else {
+              NotificationService.error('Failed to Load Subscriptions', 'Could not fetch active subscriptions');
       }
     } catch (error) {
       console.error('Error fetching active subscriptions:', error);
+      NotificationService.error('Error', 'Failed to fetch active subscriptions');
     } finally {
       setLoading(false);
     }

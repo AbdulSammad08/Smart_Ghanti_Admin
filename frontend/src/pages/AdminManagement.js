@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
+import { NotificationService } from '../utils/NotificationService';
 const AdminManagement = () => {
   const [admins, setAdmins] = useState([]);
   const [email, setEmail] = useState('');
@@ -19,8 +20,13 @@ const AdminManagement = () => {
       });
       const data = await response.json();
       setAdmins(data);
+          // Show notification for data loaded
+          if (data.length > 0) {
+            NotificationService.info('✅ Admins Loaded', `${data.length} admin accounts loaded`);
+          }
     } catch (error) {
       console.error('Error fetching admins:', error);
+      NotificationService.error('Error', 'Failed to fetch admin accounts');
     }
   };
 
@@ -40,23 +46,30 @@ const AdminManagement = () => {
       });
 
       if (response.ok) {
-        alert('Admin created successfully');
+        NotificationService.created('Admin Account');
         setEmail('');
         setPassword('');
         fetchAdmins();
       } else {
         const error = await response.json();
-        alert(error.message);
+        NotificationService.error('Creation Failed', error.message);
       }
     } catch (error) {
-      alert('Error creating admin');
+      NotificationService.error('Error', 'Failed to create admin account');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (adminId) => {
-    if (window.confirm('Are you sure you want to delete this admin?')) {
+    const isConfirmed = await NotificationService.confirm(
+      'Delete Admin Account?',
+      'Are you sure you want to delete this admin account? This action cannot be undone.',
+      'Yes, delete it!',
+      'Cancel'
+    );
+
+    if (isConfirmed) {
       try {
         const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:5000/api/admin/admins/${adminId}`, {
@@ -65,13 +78,13 @@ const AdminManagement = () => {
         });
 
         if (response.ok) {
-          alert('Admin deleted successfully');
+          NotificationService.deleted('Admin Account');
           fetchAdmins();
         } else {
-          alert('Error deleting admin');
+          NotificationService.error('Deletion Failed', 'Unable to delete this admin account');
         }
       } catch (error) {
-        alert('Error deleting admin');
+        NotificationService.error('Error', 'Failed to delete admin account');
       }
     }
   };

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
+import { NotificationService } from '../utils/NotificationService';
 
 const SubscriptionPlans = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,12 +22,16 @@ const SubscriptionPlans = () => {
         const data = await response.json();
         console.log('Fetched plans:', data);
         setPlans(data);
+        // Show notification for data loaded
+        NotificationService.info('✅ Plans Loaded', `${data.length} subscription plans loaded`);
       } else {
         const errorData = await response.json();
         console.error('Error fetching plans:', errorData);
+        NotificationService.error('Failed to Load Plans', 'Could not fetch subscription plans');
       }
     } catch (error) {
       console.error('Error fetching plans:', error);
+      NotificationService.error('Error', 'Failed to fetch subscription plans');
     }
   };
 
@@ -65,17 +70,22 @@ const SubscriptionPlans = () => {
       console.log('Response data:', responseData);
       
       if (response.ok) {
-        alert('Plan saved successfully!');
+        // Show appropriate notification based on operation
+        if (editingPlan) {
+          NotificationService.updated('Subscription Plan');
+        } else {
+          NotificationService.created('Subscription Plan');
+        }
         fetchPlans();
         setIsModalOpen(false);
         setEditingPlan(null);
         setFormData({ name: '', price: '', duration: 'monthly', features: '', maxDevices: 1, maxSecondaryUsers: 0 });
       } else {
-        alert(`Error: ${responseData.message || 'Failed to save plan'}`);
+        NotificationService.error('Save Failed', responseData.message || 'Failed to save plan');
       }
     } catch (error) {
       console.error('Error saving plan:', error);
-      alert('Network error occurred');
+      NotificationService.error('Error', 'Network error occurred while saving plan');
     }
   };
 
@@ -93,16 +103,27 @@ const SubscriptionPlans = () => {
   };
 
   const handleDelete = async (planId) => {
-    if (window.confirm('Are you sure you want to delete this plan?')) {
+    const isConfirmed = await NotificationService.confirm(
+      'Delete Subscription Plan?',
+      'Are you sure you want to delete this subscription plan? This action cannot be undone.',
+      'Yes, delete it!',
+      'Cancel'
+    );
+
+    if (isConfirmed) {
       try {
         const response = await fetch(`http://localhost:5000/api/subscriptions/${planId}`, {
           method: 'DELETE'
         });
         if (response.ok) {
           fetchPlans();
+          NotificationService.deleted('Subscription Plan');
+        } else {
+          NotificationService.error('Deletion Failed', 'Unable to delete this subscription plan');
         }
       } catch (error) {
         console.error('Error deleting plan:', error);
+        NotificationService.error('Error', 'Failed to delete subscription plan');
       }
     }
   };

@@ -14,12 +14,6 @@ const HomeownerDetails = () => {
   const [loading, setLoading] = useState(true);
   const { token } = useContext(AuthContext);
 
-  useEffect(() => {
-    if (token && id) {
-      fetchHomeownerDetails();
-    }
-  }, [token, id, fetchHomeownerDetails]);
-
   const fetchHomeownerDetails = React.useCallback(async () => {
     try {
       const response = await fetch(`http://localhost:5000/api/users/${id}/details`, {
@@ -31,13 +25,15 @@ const HomeownerDetails = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 Received homeowner details:', data);
+        console.log('💳 Active subscription:', data.activeSubscription);
         setHomeowner(data.user);
         setActiveSubscription(data.activeSubscription);
         setSecondaryOwnerships(data.secondaryOwnerships);
         setOwnershipTransfers(data.ownershipTransfers);
         setBeneficialAllotments(data.beneficialAllotments);
       } else {
-        console.error('Failed to fetch homeowner details');
+        console.error('Failed to fetch homeowner details', response.status);
       }
     } catch (error) {
       console.error('Error fetching homeowner:', error);
@@ -46,18 +42,11 @@ const HomeownerDetails = () => {
     }
   }, [token, id]);
 
-  const calculateRenewalDate = (createdAt, billingCycle) => {
-    const startDate = new Date(createdAt);
-    const renewalDate = new Date(startDate);
-    
-    if (billingCycle === 'monthly') {
-      renewalDate.setMonth(renewalDate.getMonth() + 1);
-    } else if (billingCycle === 'yearly') {
-      renewalDate.setFullYear(renewalDate.getFullYear() + 1);
+  useEffect(() => {
+    if (token && id) {
+      fetchHomeownerDetails();
     }
-    
-    return renewalDate.toLocaleDateString();
-  };
+  }, [token, id, fetchHomeownerDetails]);
 
   if (loading) {
     return (
@@ -116,24 +105,32 @@ const HomeownerDetails = () => {
             <span className="detail-value">{homeowner.createdAt ? new Date(homeowner.createdAt).toLocaleDateString() : 'N/A'}</span>
           </div>
           <div className="detail-item">
-            <span className="detail-label">Subscription Plan:</span>
-            <span className="detail-value">{activeSubscription ? activeSubscription.planSelected : 'No Active Subscription'}</span>
+            <span className="detail-label">Subscription Status:</span>
+            <span className="detail-value">
+              <span className={`badge ${activeSubscription?.status === 'Active' ? 'badge-success' : activeSubscription?.status === 'Expired' ? 'badge-danger' : 'badge-warning'}`}>
+                {activeSubscription?.status || 'None'}
+              </span>
+            </span>
           </div>
           <div className="detail-item">
-            <span className="detail-label">Billing Cycle:</span>
-            <span className="detail-value">{activeSubscription ? activeSubscription.billingCycle : 'N/A'}</span>
+            <span className="detail-label">Subscription Plan:</span>
+            <span className="detail-value">{activeSubscription?.plan || 'No Active Subscription'}</span>
           </div>
           <div className="detail-item">
             <span className="detail-label">Start Date:</span>
-            <span className="detail-value">{activeSubscription ? new Date(activeSubscription.createdAt).toLocaleDateString() : 'N/A'}</span>
+            <span className="detail-value">{activeSubscription?.startDate ? new Date(activeSubscription.startDate).toLocaleDateString() : 'N/A'}</span>
           </div>
           <div className="detail-item">
-            <span className="detail-label">Renewal Date:</span>
-            <span className="detail-value">{activeSubscription ? calculateRenewalDate(activeSubscription.createdAt, activeSubscription.billingCycle) : 'N/A'}</span>
+            <span className="detail-label">End Date:</span>
+            <span className="detail-value">{activeSubscription?.endDate ? new Date(activeSubscription.endDate).toLocaleDateString() : 'N/A'}</span>
           </div>
           <div className="detail-item">
-            <span className="detail-label">Final Amount:</span>
-            <span className="detail-value">{activeSubscription ? `PKR ${activeSubscription.finalAmount}` : 'N/A'}</span>
+            <span className="detail-label">Subscription Active:</span>
+            <span className="detail-value">
+              <span className={`badge ${activeSubscription?.isActive ? 'badge-success' : 'badge-danger'}`}>
+                {activeSubscription?.isActive ? 'Yes' : 'No'}
+              </span>
+            </span>
           </div>
         </div>
       </div>

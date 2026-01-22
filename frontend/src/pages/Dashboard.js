@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 
+import { NotificationService } from '../utils/NotificationService';
 const Dashboard = () => {
   const [cloudStatus, setCloudStatus] = useState({ cloudStatus: 'checking', message: 'Checking MongoDB Connection...' });
   const [stats, setStats] = useState({
@@ -22,18 +23,25 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setCloudStatus(data);
+              // Show notification for successful database connection
+              if (data.cloudStatus === 'connected') {
+                NotificationService.success('✅ Database Connected', 'MongoDB connection established');
+              }
       } else {
         const errorData = await response.json().catch(() => ({}));
+        const message = errorData.message || 'MongoDB Connection Disrupted';
         setCloudStatus({ 
           cloudStatus: 'disconnected', 
-          message: errorData.message || 'MongoDB Connection Disrupted' 
+          message: message
         });
+        NotificationService.error('⚠️ Database Disconnected', message);
       }
     } catch (error) {
       setCloudStatus({ 
         cloudStatus: 'disconnected', 
         message: 'Not Connected to MongoDB' 
       });
+      NotificationService.warning('⚠️ Connection Error', 'Failed to connect to MongoDB');
     }
   };
 
@@ -50,9 +58,14 @@ const Dashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setStats(data);
+              // Show notification for dashboard stats update
+              NotificationService.info('📊 Dashboard Updated', 'Statistics refreshed successfully');
+            } else {
+              NotificationService.error('Failed to Load Stats', 'Could not fetch dashboard statistics');
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+      NotificationService.error('Error', 'Failed to fetch dashboard statistics');
     }
   };
 
@@ -68,10 +81,21 @@ const Dashboard = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('📬 Activities received:', data);
         setActivities(data);
+              // Show notification for new activities
+              if (data.length > 0) {
+                NotificationService.info('📬 New Activities', `${data.length} recent activities loaded`);
+              } else {
+                console.warn('⚠️ No activities found');
+              }
+            } else {
+              console.error('Failed response:', response.status);
+              NotificationService.error('Failed to Load Activities', 'Could not fetch recent activities');
       }
     } catch (error) {
       console.error('Error fetching activities:', error);
+      NotificationService.error('Error', 'Failed to fetch activities');
     }
   };
 
@@ -153,7 +177,7 @@ const Dashboard = () => {
               <tr>
                 <th>Timestamp</th>
                 <th>Activity</th>
-                <th>User</th>
+                <th>Type</th>
               </tr>
             </thead>
             <tbody>

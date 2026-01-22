@@ -55,10 +55,17 @@ router.patch('/:id/status', auth, async (req, res) => {
 
 // Serve receipt files
 router.get('/receipt/:filename', (req, res) => {
-  const filename = req.params.filename;
+  let filename = req.params.filename;
+  // Decode the filename in case it's URL-encoded
+  filename = decodeURIComponent(filename);
+  // Extract just the filename if it contains path separators (safety check)
+  filename = filename.split('/').pop().split('\\').pop();
+  
   const filePath = path.join(__dirname, '..', 'uploads', 'receipts', filename);
+  console.log('📄 Serving receipt:', filename, 'Path:', filePath);
   res.sendFile(filePath, (err) => {
     if (err) {
+      console.error('❌ Receipt not found:', filename);
       res.status(404).json({ message: 'Receipt file not found' });
     }
   });

@@ -27,8 +27,12 @@ router.get('/dashboard/stats', auth, dbCheck, async (req, res) => {
     const pendingSecondaryOwnerships = await SecondaryOwnership.countDocuments({ __v: 0 });
     
     const pendingRequests = pendingBeneficialAllotments + pendingOwnershipTransfers + pendingSecondaryOwnerships;
-    
-    const activeSubscriptions = await User.countDocuments({ subscriptionId: { $exists: true } });
+
+    // Active Subscriptions: count from users_v2 where subscriptionStatus == ACTIVE (case-insensitive)
+    const db = mongoose.connection.db;
+    const activeSubscriptions = await db.collection('users_v2').countDocuments({
+      subscriptionStatus: { $regex: /^active$/i }
+    });
 
     res.json({
       totalUsers,
@@ -79,31 +83,68 @@ router.get('/system/status', async (req, res) => {
 // Recent Activities
 router.get('/dashboard/activities', auth, dbCheck, async (req, res) => {
   try {
-    const recentUsers = await User.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('name email createdAt');
+    const SecondaryOwnership = require('../models/SecondaryOwnership');
+    const OwnershipTransfer = require('../models/OwnershipTransfer');
+    const BeneficialAllotment = require('../models/BeneficialAllotment');
+    const Payment = require('../models/Payment');
 
-    const recentTransfers = await Transfer.find()
-      .populate('fromUser toUser', 'name email')
-      .sort({ createdAt: -1 })
-      .limit(5);
+    console.log('📋 Fetching recent activities...');
+
+    // Fetch recent records in parallel - use lean() for better performance and avoid sorting issues
+    const [recentSecondary, recentTransfers, recentBeneficiaries, recentPayments] = await Promise.all([
+      SecondaryOwnership.find().lean().limit(10),
+      OwnershipTransfer.find().lean().limit(10),
+      BeneficialAllotment.find().lean().limit(10),
+      Payment.find().lean().limit(10)
+    ]);
+
+    console.log(`📊 Secondary: ${recentSecondary.length}, Transfers: ${recentTransfers.length}, Beneficiaries: ${recentBeneficiaries.length}, Payments: ${recentPayments.length}`);
 
     const activities = [
-      ...recentUsers.map(user => ({
-        type: 'user_registered',
-        message: `New user ${user.name} registered`,
-        timestamp: user.createdAt
+      ...recentSecondary.map(item => ({
+        type: 'secondary_user',
+        message: `Secondary user ${item.secondaryOwnerName} added for ${item.userName}`,
+        timestamp: item.updatedAt || item.createdAt || new Date(),
+        meta: {
+          user: item.userName,
+          email: item.userEmail
+        }
       })),
-      ...recentTransfers.map(transfer => ({
-        type: 'transfer_request',
-        message: `Transfer request from ${transfer.fromUser?.name} to ${transfer.toUser?.name}`,
-        timestamp: transfer.createdAt
+      ...recentTransfers.map(item => ({
+        type: 'ownership_transfer',
+        message: `Ownership transfer from ${item.fromUser || 'Unknown'} to ${item.toUser || 'Unknown'}`,
+        timestamp: item.updatedAt || item.createdAt || new Date(),
+        meta: {
+          status: item.status,
+          transferType: item.transferType
+        }
+      })),
+      ...recentBeneficiaries.map(item => ({
+        type: 'beneficiary_allotment',
+        message: `Beneficiary ${item.beneficiaryName} allotted to ${item.userName}`,
+        timestamp: item.updatedAt || item.createdAt || new Date(),
+        meta: {
+          allotmentType: item.allotmentType,
+          share: item.sharePercentage
+        }
+      })),
+      ...recentPayments.map(item => ({
+        type: 'payment_proof',
+        message: `Payment proof uploaded by ${item.userName} for ${item.planSelected}`,
+        timestamp: item.updatedAt || item.createdAt || new Date(),
+        meta: {
+          billingCycle: item.billingCycle,
+          amount: item.finalAmount
+        }
       }))
-    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
+    ]
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+    .slice(0, 10);
 
+    console.log(`✅ Returning ${activities.length} activities`);
     res.json(activities);
   } catch (error) {
+    console.error('❌ Error fetching activities:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
