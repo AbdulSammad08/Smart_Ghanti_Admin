@@ -13,9 +13,27 @@ router.get('/', auth, async (req, res) => {
     }
     const db = mongoose.connection.db;
     const payments = await db.collection('payments').find({}).toArray();
+    console.log(`📊 Retrieved ${payments.length} payments`);
     res.json(payments);
   } catch (error) {
     console.error('Error fetching payments:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Get single payment by ID (for debugging)
+router.get('/debug/:id', auth, async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const paymentId = new mongoose.Types.ObjectId(req.params.id);
+    const payment = await db.collection('payments').findOne({ _id: paymentId });
+    
+    if (!payment) {
+      return res.status(404).json({ message: 'Payment not found', id: req.params.id });
+    }
+    
+    res.json(payment);
+  } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
@@ -35,20 +53,160 @@ router.get('/active', auth, async (req, res) => {
 router.patch('/:id/status', auth, async (req, res) => {
   try {
     const { action } = req.body;
-    const __v = action === 'confirm' ? 1 : 0;
+    const db = mongoose.connection.db;
+    const paymentsCollection = db.collection('payments');
     
-    const payment = await Payment.findByIdAndUpdate(
-      req.params.id,
-      { __v },
-      { new: true }
+    console.log(`🔄 Updating payment ID: ${req.params.id}, Action: ${action}`);
+    
+    // Convert string ID to ObjectId if it's a valid MongoDB ObjectId
+    let paymentId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(paymentId)) {
+      return res.status(400).json({ message: 'Invalid payment ID format' });
+    }
+    paymentId = new mongoose.Types.ObjectId(paymentId);
+    
+    // First, check if payment exists
+    const existingPayment = await paymentsCollection.findOne({ _id: paymentId });
+    if (!existingPayment) {
+      console.log(`❌ Payment not found: ${paymentId}`);
+      return res.status(404).json({ message: 'Payment not found', id: req.params.id });
+    }
+    
+    console.log(`✅ Found payment:`, existingPayment.userName);
+    
+    // Update status in Cosmos DB
+    const result = await paymentsCollection.updateOne(
+      { _id: paymentId },
+      { 
+        $set: { 
+          __v: action === 'confirm' ? 1 : 0,
+          status: action === 'confirm' ? 'approved' : 'pending',
+          updatedAt: new Date()
+        }
+      }
     );
     
-    if (!payment) {
+    console.log(`📝 Update result:`, result);
+    
+    if (result.matchedCount === 0) {
       return res.status(404).json({ message: 'Payment not found' });
     }
     
-    res.json(payment);
+    if (result.modifiedCount === 0) {
+      console.log('⚠️  No changes made to payment');
+    } else {
+      console.log(`✅ Payment ${paymentId} updated successfully`);
+    }
+    
+    // If payment is confirmed, update user's subscription information
+    if (action === 'confirm') {
+      try {
+        const usersCollection = db.collection('users_v2');
+        
+        console.log(`\n========== USER UPDATE PROCESS ==========`);
+        console.log(`🔍 Payment Details:`, {
+          userName: existingPayment.userName,
+          contactNumber: existingPayment.contactNumber,
+          plan: existingPayment.planSelected,
+          billingCycle: existingPayment.billingCycle
+        });
+        
+        // First check if user exists
+        const userExists = await usersCollection.findOne({ 
+          $or: [
+            { name: existingPayment.userName },
+            { phone: existingPayment.contactNumber }
+          ]
+        });
+        
+        if (userExists) {
+          console.log(`✅ Found user:`, {
+            id: userExists._id,
+            email: userExists.email,
+            name: userExists.name,
+            phone: userExists.phone,
+            currentStatus: userExists.subscriptionStatus
+          });
+        } else {
+          console.log(`❌ User NOT found in users_v2`);
+          // List all users to help debug
+          const allUsers = await usersCollection.find({}).project({ name: 1, email: 1, phone: 1 }).limit(10).toArray();
+          console.log(`📋 First 10 users in database:`, allUsers);
+          console.log(`⚠️  Cannot update subscription - user does not exist`);
+          console.log(`========================================\n`);
+        }
+        
+        if (!userExists) {
+          console.log(`⚠️  Skipping user update - no matching user found`);
+        } else {
+          // Calculate subscription dates based on billing cycle
+          const startDate = new Date();
+          const endDate = new Date();
+          
+          if (existingPayment.billingCycle === 'Monthly') {
+            endDate.setMonth(endDate.getMonth() + 1);
+          } else if (existingPayment.billingCycle === 'Yearly') {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          } else if (existingPayment.billingCycle === 'Quarterly') {
+            endDate.setMonth(endDate.getMonth() + 3);
+          }
+          
+          console.log(`📅 Subscription dates:`, {
+            start: startDate.toISOString(),
+            end: endDate.toISOString()
+          });
+          
+          // Update user subscription information
+          const userUpdateResult = await usersCollection.updateOne(
+            { _id: userExists._id },
+            {
+              $set: {
+                subscriptionStatus: 'active',
+                subscriptionPlan: existingPayment.planSelected,
+                subscriptionStartDate: startDate,
+                subscriptionEndDate: endDate,
+                updatedAt: new Date()
+              }
+            }
+          );
+          
+          console.log(`📝 Update operation result:`, {
+            matched: userUpdateResult.matchedCount,
+            modified: userUpdateResult.modifiedCount,
+            acknowledged: userUpdateResult.acknowledged
+          });
+          
+          if (userUpdateResult.modifiedCount > 0) {
+            console.log(`✅ User subscription SUCCESSFULLY updated!`);
+            
+            // Verify the update
+            const verifyUser = await usersCollection.findOne({ _id: userExists._id });
+            console.log(`🔍 Verified user subscription:`, {
+              status: verifyUser.subscriptionStatus,
+              plan: verifyUser.subscriptionPlan,
+              start: verifyUser.subscriptionStartDate,
+              end: verifyUser.subscriptionEndDate
+            });
+          } else {
+            console.log(`⚠️  Update matched but no fields changed (already up to date?)`);
+          }
+        }
+        
+        console.log(`========================================\n`);
+        
+      } catch (userUpdateError) {
+        console.error(`❌ ERROR during user update:`, userUpdateError);
+        console.error(`Stack trace:`, userUpdateError.stack);
+        // Don't fail the whole request if user update fails
+      }
+    }
+    
+    // Fetch and return updated payment
+    const updatedPayment = await paymentsCollection.findOne({ _id: paymentId });
+    res.json(updatedPayment);
+    
   } catch (error) {
+    console.error('❌ Error updating payment:', error.message);
     res.status(500).json({ message: error.message });
   }
 });

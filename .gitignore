@@ -4,6 +4,17 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Python virtual environments
+.venv/
+.venv_recog/
+venv/
+env/
+ENV/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
 # Environment variables
 .env
 .env.local

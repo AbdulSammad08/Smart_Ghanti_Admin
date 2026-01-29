@@ -24,6 +24,11 @@ const paymentSchema = new mongoose.Schema({
   finalAmount: {
     type: Number,
     required: true
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
   }
 }, {
   timestamps: true
