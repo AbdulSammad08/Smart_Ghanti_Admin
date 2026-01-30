@@ -15,7 +15,8 @@ const AdminManagement = () => {
   const fetchAdmins = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/admins', {
+      import API_BASE_URL from '../utils/apiConfig';
+      const response = await fetch(`${API_BASE_URL}/api/admin/admins`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -36,7 +37,7 @@ const AdminManagement = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/create-admin', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/create-admin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +73,7 @@ const AdminManagement = () => {
     if (isConfirmed) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/admin/admins/${adminId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/admin/admins/${adminId}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${token}` }
         });
