@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log('Attempting login with:', email);
-      const response = await fetch('http://localhost:5000/api/auth/admin/login', {
+      import API_BASE_URL from '../utils/apiConfig';
+      const response = await fetch(`${API_BASE_URL}/api/auth/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
