@@ -33,7 +33,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: backend/**
 
   deploy:
     runs-on: ubuntu-latest
@@ -47,6 +46,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+
+      - name: Move backend files to root
+        run: |
+          shopt -s dotglob
+          mv backend/* .
+          rm -rf backend
       
       - name: Login to Azure
         uses: azure/login@v2
@@ -64,6 +69,7 @@ jobs:
           package: .
 
           
+
 
 
 
