@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 
 import { NotificationService } from '../utils/NotificationService';
 const Dashboard = () => {
@@ -14,7 +15,8 @@ const Dashboard = () => {
   // Check MongoDB Database connectivity
   const checkCloudStatus = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/system/status', {
+      
+      const response = await fetch(`${API_BASE_URL}/api/admin/system/status`, {
         headers: {
           'Content-Type': 'application/json'
         }
@@ -48,7 +50,7 @@ const Dashboard = () => {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/dashboard/stats', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -72,7 +74,7 @@ const Dashboard = () => {
   const fetchActivities = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/dashboard/activities', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/activities`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
