@@ -50,13 +50,7 @@ jobs:
 
       - name: List files after artifact download
         run: ls -l
-
-      - name: Move backend files to root
-        run: |
-          shopt -s dotglob
-          mv backend/* .
-          rm -rf backend
-      
+  
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -73,6 +67,7 @@ jobs:
           package: .
 
           
+
 
 
 
