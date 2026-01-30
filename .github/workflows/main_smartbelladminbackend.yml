@@ -61,5 +61,7 @@ jobs:
         with:
           app-name: 'SmartBellAdminBackend'
           slot-name: 'Production'
-          package: .
+          package: backend
+          app_location: backend
+
           
