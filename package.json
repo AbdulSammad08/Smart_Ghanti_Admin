@@ -13,7 +13,7 @@
     "create-admin": "cd backend && npm run create-admin",
     "test-connection": "cd backend && npm run test-connection",
     "setup": "npm run install-all && npm run create-admin",
-    "build": "cd frontend && npm run build",
+    "build": "echo 'No build step needed at root'",
     "vercel-build": "npm run install-all && npm run build"
   },
   "repository": {
