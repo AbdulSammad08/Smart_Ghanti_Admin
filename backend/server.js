@@ -18,7 +18,7 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-app-name.vercel.app', 'https://*.vercel.app']
+    ? ['https://smartghantidamin.vercel.app', 'https://*.vercel.app', 'http://localhost:3000']
     : 'http://localhost:3000',
   credentials: true
 }));
