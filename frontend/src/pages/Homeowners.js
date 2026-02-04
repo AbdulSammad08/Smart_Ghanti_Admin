@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 import { AuthContext } from '../components/AuthContext';
 import { NotificationService } from '../utils/NotificationService';
 
@@ -20,7 +21,7 @@ const Homeowners = () => {
     console.log('Fetching homeowners with token:', token);
     
     try {
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -69,7 +70,7 @@ const Homeowners = () => {
 
     if (isConfirmed) {
       try {
-        const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

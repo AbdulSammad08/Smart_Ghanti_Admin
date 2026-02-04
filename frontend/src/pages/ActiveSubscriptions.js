@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 
 import { NotificationService } from '../utils/NotificationService';
 const ActiveSubscriptions = () => {
@@ -13,7 +14,6 @@ const ActiveSubscriptions = () => {
   const fetchActiveSubscriptions = async () => {
     try {
       const token = localStorage.getItem('token');
-      import API_BASE_URL from '../utils/apiConfig';
       const response = await fetch(`${API_BASE_URL}/api/payments/active`, {
         headers: { Authorization: `Bearer ${token}` }
       });

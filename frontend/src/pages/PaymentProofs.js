@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 import { NotificationService } from '../utils/NotificationService';
 
 const PaymentProofs = () => {
@@ -13,7 +14,7 @@ const PaymentProofs = () => {
   const fetchPayments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/payments', {
+      const response = await fetch(`${API_BASE_URL}/api/payments`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -44,7 +45,7 @@ const PaymentProofs = () => {
   const handleAction = async (id, action) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/payments/${id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/payments/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +82,7 @@ const PaymentProofs = () => {
       filename = receiptFile.split('\\').pop();
     }
     console.log('Receipt file:', receiptFile, 'Filename:', filename);
-    const receiptUrl = `http://localhost:5000/api/payments/receipt/${filename}`;
+    const receiptUrl = `${API_BASE_URL}/api/payments/receipt/${filename}`;
     window.open(receiptUrl, '_blank');
   };
 

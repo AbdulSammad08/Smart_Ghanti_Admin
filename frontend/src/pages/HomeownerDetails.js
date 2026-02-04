@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 import { AuthContext } from '../components/AuthContext';
 
 const HomeownerDetails = () => {
@@ -16,7 +17,7 @@ const HomeownerDetails = () => {
 
   const fetchHomeownerDetails = React.useCallback(async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${id}/details`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${id}/details`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

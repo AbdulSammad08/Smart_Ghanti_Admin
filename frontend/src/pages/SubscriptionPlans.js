@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Modal from '../components/Modal';
+import API_BASE_URL from '../utils/apiConfig';
 import { NotificationService } from '../utils/NotificationService';
 
 const SubscriptionPlans = () => {
@@ -14,7 +15,7 @@ const SubscriptionPlans = () => {
     try {
       console.log('Fetching plans...');
       
-      const response = await fetch('http://localhost:5000/api/subscriptions');
+      const response = await fetch(`${API_BASE_URL}/api/subscriptions`);
       
       console.log('Fetch plans response status:', response.status);
       
@@ -51,8 +52,8 @@ const SubscriptionPlans = () => {
       console.log('Plan data to send:', planData);
       
       const url = editingPlan 
-        ? `http://localhost:5000/api/subscriptions/${editingPlan._id}`
-        : 'http://localhost:5000/api/subscriptions';
+        ? `${API_BASE_URL}/api/subscriptions/${editingPlan._id}`
+        : `${API_BASE_URL}/api/subscriptions`;
       
       const method = editingPlan ? 'PUT' : 'POST';
       console.log('Making request to:', url, 'with method:', method);
@@ -112,7 +113,7 @@ const SubscriptionPlans = () => {
 
     if (isConfirmed) {
       try {
-        const response = await fetch(`http://localhost:5000/api/subscriptions/${planId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/subscriptions/${planId}`, {
           method: 'DELETE'
         });
         if (response.ok) {

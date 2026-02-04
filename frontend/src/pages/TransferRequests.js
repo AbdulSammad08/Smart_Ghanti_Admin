@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 import { NotificationService } from '../utils/NotificationService';
 
 const TransferRequests = () => {
@@ -19,9 +20,9 @@ const TransferRequests = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [allotmentsRes, transfersRes, ownershipsRes] = await Promise.all([
-        fetch('http://localhost:5000/api/transfers/beneficial-allotments', { headers }),
-        fetch('http://localhost:5000/api/transfers/ownership-transfers', { headers }),
-        fetch('http://localhost:5000/api/transfers/secondary-ownerships', { headers })
+        fetch(`${API_BASE_URL}/api/transfers/beneficial-allotments`, { headers }),
+        fetch(`${API_BASE_URL}/api/transfers/ownership-transfers`, { headers }),
+        fetch(`${API_BASE_URL}/api/transfers/secondary-ownerships`, { headers })
       ]);
 
       console.log('Response status:', {
@@ -76,7 +77,7 @@ const TransferRequests = () => {
   const handleAction = async (id, action, type) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/transfers/${type}/${id}/status`, {
+      const response = await fetch(`${API_BASE_URL}/api/transfers/${type}/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

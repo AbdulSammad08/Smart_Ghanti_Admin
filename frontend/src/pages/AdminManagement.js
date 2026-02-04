@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
+import API_BASE_URL from '../utils/apiConfig';
 
 import { NotificationService } from '../utils/NotificationService';
 const AdminManagement = () => {
@@ -15,7 +16,6 @@ const AdminManagement = () => {
   const fetchAdmins = async () => {
     try {
       const token = localStorage.getItem('token');
-      import API_BASE_URL from '../utils/apiConfig';
       const response = await fetch(`${API_BASE_URL}/api/admin/admins`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
