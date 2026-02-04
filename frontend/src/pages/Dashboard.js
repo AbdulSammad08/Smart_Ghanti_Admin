@@ -14,8 +14,7 @@ const Dashboard = () => {
 
   // Check MongoDB Database connectivity
   const checkCloudStatus = async () => {
-    try {
-      
+        try {
       const response = await fetch(`${API_BASE_URL}/api/admin/system/status`, {
         headers: {
           'Content-Type': 'application/json'
