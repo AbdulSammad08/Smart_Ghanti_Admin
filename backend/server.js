@@ -16,10 +16,23 @@ const firebaseService = require('./services/firebaseService');
 const app = express();
 
 // Middleware
+const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,https://smartghantii.vercel.app')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://smartghantidamin.vercel.app', 'https://*.vercel.app', 'http://localhost:3000']
-    : 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true
 }));
 app.use(express.json());
