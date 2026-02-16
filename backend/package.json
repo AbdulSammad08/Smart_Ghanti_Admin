@@ -15,10 +15,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "Your Name",
+  "author": "Abdul Sammad",
   "license": "MIT",
   "description": "Smart Bell Database Admin Portal - Backend API",
   "dependencies": {
+    "@azure/storage-blob": "^12.31.0",
     "axios": "^1.6.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
