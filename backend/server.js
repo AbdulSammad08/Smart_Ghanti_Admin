@@ -16,10 +16,16 @@ const firebaseService = require('./services/firebaseService');
 const app = express();
 
 // Middleware
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,https://smartghantii.vercel.app')
+
+// Always allow localhost and production Vercel domain for CORS
+const allowedOrigins = (process.env.CORS_ORIGINS && process.env.CORS_ORIGINS.length > 0
+  ? process.env.CORS_ORIGINS
+  : 'http://localhost:3000,https://smartghantii.vercel.app')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+console.log('CORS allowed origins:', allowedOrigins);
 
 app.use(cors({
   origin: (origin, callback) => {
