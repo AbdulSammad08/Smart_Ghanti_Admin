@@ -16,44 +16,13 @@ const firebaseService = require('./services/firebaseService');
 const app = express();
 
 // Middleware
-const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,https://smartghantii.vercel.app')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
-app.use((req, res, next) => {
-  // Log the incoming Origin for debugging
-  if (req.headers.origin) {
-    console.log('CORS request from:', req.headers.origin);
-  }
-  next();
-});
-
+// Minimal CORS config for debugging: allow only Vercel frontend
 app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true);
-    }
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-    console.log(`CORS blocked for origin: ${origin}`);
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
+  origin: 'https://smartghantii.vercel.app',
   credentials: true
 }));
-
-// Always respond to OPTIONS preflight requests
 app.options('*', cors({
-  origin: (origin, callback) => {
-    if (!origin) {
-      return callback(null, true);
-    }
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
-  },
+  origin: 'https://smartghantii.vercel.app',
   credentials: true
 }));
 app.use(express.json());
