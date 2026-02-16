@@ -21,16 +21,37 @@ const allowedOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3000,https
   .map((origin) => origin.trim())
   .filter(Boolean);
 
+app.use((req, res, next) => {
+  // Log the incoming Origin for debugging
+  if (req.headers.origin) {
+    console.log('CORS request from:', req.headers.origin);
+  }
+  next();
+});
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) {
       return callback(null, true);
     }
-
     if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
+    console.log(`CORS blocked for origin: ${origin}`);
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true
+}));
 
+// Always respond to OPTIONS preflight requests
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true
