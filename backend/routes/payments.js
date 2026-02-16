@@ -4,7 +4,16 @@ const Payment = require('../models/Payment');
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
 const path = require('path');
+const { BlobServiceClient } = require('@azure/storage-blob');
 
+// Azure Blob Storage configuration
+const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING;
+const PAYMENT_IMAGES_CONTAINER = process.env.PAYMENT_IMAGES_CONTAINER || 'payment-images';
+
+let blobServiceClient;
+if (AZURE_STORAGE_CONNECTION_STRING) {
+  blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+}
 // Get all payments
 router.get('/', auth, async (req, res) => {
   try {
@@ -212,21 +221,37 @@ router.patch('/:id/status', auth, async (req, res) => {
 });
 
 // Serve receipt files
-router.get('/receipt/:filename', (req, res) => {
+
+// Serve receipt files from Azure Blob Storage
+router.get('/receipt/:filename', async (req, res) => {
   let filename = req.params.filename;
-  // Decode the filename in case it's URL-encoded
   filename = decodeURIComponent(filename);
-  // Extract just the filename if it contains path separators (safety check)
   filename = filename.split('/').pop().split('\\').pop();
-  
-  const filePath = path.join(__dirname, '..', 'uploads', 'receipts', filename);
-  console.log('📄 Serving receipt:', filename, 'Path:', filePath);
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('❌ Receipt not found:', filename);
-      res.status(404).json({ message: 'Receipt file not found' });
+
+  if (!blobServiceClient) {
+    return res.status(500).json({ message: 'Azure Storage not configured' });
+  }
+
+  try {
+    const containerClient = blobServiceClient.getContainerClient(PAYMENT_IMAGES_CONTAINER);
+    const blobClient = containerClient.getBlobClient(filename);
+    const exists = await blobClient.exists();
+    if (!exists) {
+      console.error('❌ Receipt not found in Azure Blob Storage:', filename);
+      return res.status(404).json({ message: 'Receipt file not found' });
     }
-  });
+
+    // Set appropriate headers
+    res.setHeader('Content-Type', 'image/jpeg');
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+
+    // Stream the blob to the response
+    const downloadBlockBlobResponse = await blobClient.download();
+    downloadBlockBlobResponse.readableStreamBody.pipe(res);
+  } catch (err) {
+    console.error('❌ Error serving receipt from Azure Blob Storage:', err.message);
+    res.status(500).json({ message: 'Error retrieving receipt file' });
+  }
 });
 
 module.exports = router;

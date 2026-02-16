@@ -11,7 +11,12 @@ npm install
 
 2. Configure environment variables in `.env`:
 ```
+
+# Environment Variables
+
 MONGODB_URI=your_azure_cosmos_db_connection_string
+AZURE_STORAGE_CONNECTION_STRING=your_azure_storage_connection_string
+PAYMENT_IMAGES_CONTAINER=payment-images
 JWT_SECRET=your_jwt_secret
 PORT=5000
 ADMIN_EMAIL=admin@example.com
