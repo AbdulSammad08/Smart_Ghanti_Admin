@@ -520,5 +520,4 @@ class FirebaseSyncManager:
         
         # Start listening
         self.doorbell_events_ref.listen(on_doorbell_event)
-
-            return None
+        return None

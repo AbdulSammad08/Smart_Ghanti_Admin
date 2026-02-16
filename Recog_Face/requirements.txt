@@ -16,11 +16,10 @@ Pillow==12.0.0
 deepface==0.0.96
 keras-vggface==0.6
 
-# Object Detection (YOLO) - Optional, not required for doorbell recognition
-# Commented out due to torch/tensorflow typing-extensions conflict
-# ultralytics==8.3.235
-# torch==2.4.1
-# torchvision==0.19.1
+# Object Detection (YOLO)
+ultralytics==8.3.235
+torch==2.0.1
+torchvision==0.15.2
 
 # API Server
 Flask==3.1.2
